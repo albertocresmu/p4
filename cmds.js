@@ -151,7 +151,28 @@ exports.editCmd = (rl, id) => {
  * @param id Clave del quiz a probar.
  */
 exports.testCmd = (rl, id) => {
-    log('Probar el quiz indicado.', 'red');
+    if (typeof id === "undefined") {
+        errorlog(`Falta el parámetro id.`);
+        rl.prompt();
+    } else {
+        try {
+            const quiz = model.getByIndex(id);
+            rl.question(`${colorize(quiz.question + '? ', 'red')} `, answer => {
+                if (answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim()){
+                    log('Su respuesta es correcta.');
+                    biglog('Correcta', 'green');
+                    rl.prompt();
+                } else {
+                    log('Su respuesta es incorrecta.');
+                    biglog('Incorrecta', 'red');
+                    rl.prompt();
+                }
+            });
+        } catch(error) {
+            errorlog(error.message);
+            rl.prompt();
+        }
+    }
     rl.prompt();
 };
 
@@ -163,8 +184,58 @@ exports.testCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.playCmd = rl => {
-    log('Jugar.', 'red');
-    rl.prompt();
+    let score = 0;
+    let toBeResolved = [];
+
+    let i;
+    for (i = 0; i < model.count(); i++) {
+        toBeResolved[i] = i;
+    }
+
+    const playOne = () => {
+        if (toBeResolved.length === 0) {
+            log('No hay nada más que preguntar.');
+            log('Fin del examen. Aciertos:');
+            biglog(score, 'magenta');
+            rl.prompt();
+        } else {
+            try {
+                // Posición del array que contiene el id de la pregunta a responder. 
+                // Es un número al azar entre 0 y el número de preguntas que quedan menos 1.
+                let pos = Math.round((toBeResolved.length-1)*Math.random());
+                
+                // Si aún quedan preguntas por responder, lanzo una nueva pregunta:
+                if (pos >= 0){
+                    // Id de la pregunta a responder.
+                    let id = toBeResolved[pos];
+                    // Pregunta a responder.
+                    let quiz = model.getByIndex(id);
+                    // Elimino en el array el id de la pregunta lanzada.
+                    toBeResolved.splice(pos,1);
+                    rl.question(`${colorize(quiz.question + '?', 'red')}`, answer => {
+                        if (answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim()){
+                            score++;
+                            log(`CORRECTO - Lleva ${score} aciertos.`);
+                            playOne();
+                            rl.prompt();
+                        } else {
+                            log(`INCORRECTO.`);
+                            log(`Fin del examen. Aciertos:`);
+                            biglog(score, 'magenta');
+                            rl.prompt();
+                        }
+                    });
+                } else {
+                    // Si ya no quedan preguntas por responder, vuelvo al inicio y terminará el juego.
+                    playOne();
+                }
+            } catch (error) {
+                errorlog(error.message);
+                rl.prompt();
+            }
+        }
+    }
+    playOne();
 };
 
 
@@ -175,8 +246,7 @@ exports.playCmd = rl => {
  */
 exports.creditsCmd = rl => {
     log('Autores de la práctica:');
-    log('Nombre 1', 'green');
-    log('Nombre 2', 'green');
+    log('Alberto Crespo Munoz', 'green');
     rl.prompt();
 };
 
