@@ -1,20 +1,19 @@
 const readline = require('readline');
 
-const {log, biglog, errorlog, colorize} = require("./out");
+// Importo las funciones a medida que las necesito.
+const {log, biglog, errorlog, colorize} = require('./out');
 
-const cmds = require("./cmds");
-
+const cmds = require('./cmds');
 
 // Mensaje inicial
 biglog('CORE Quiz', 'green');
-
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: colorize("quiz > ", 'blue'),
     completer: (line) => {
-        const completions = 'h help add delete edit list test p play credits q quit'.split(' ');
+        const completions = 'h help add delete list test p play credits q quit'.split(' ');
         const hits = completions.filter((c) => c.startsWith(line));
         // show all completions if none found
         return [hits.length ? hits : completions, line];
@@ -25,24 +24,25 @@ rl.prompt();
 
 rl
 .on('line', (line) => {
-
+    // Cojo la línea y la parto por un especio en blanco.
     let args = line.split(" ");
+    // Cojo el comando y lo pongo en minúsculas
     let cmd = args[0].toLowerCase().trim();
 
     switch (cmd) {
         case '':
-            rl.prompt();
+            rl.prompt(rl);
             break;
 
-        case 'help':
         case 'h':
+        case 'help':
             cmds.helpCmd(rl);
             break;
 
         case 'quit':
         case 'q':
             cmds.quitCmd(rl);
-            break;
+            break
 
         case 'add':
             cmds.addCmd(rl);
@@ -83,10 +83,9 @@ rl
             rl.prompt();
             break;
     }
+    /** rl.prompt(); */
 })
 .on('close', () => {
     log('Adios!');
     process.exit(0);
 });
-
-

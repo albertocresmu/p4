@@ -1,4 +1,3 @@
-
 const Sequelize = require('sequelize');
 
 const sequelize = new Sequelize("sqlite:quizzes.sqlite", {logging: false});
@@ -31,3 +30,5 @@ sequelize.sync()
 .catch(error => {
   console.log(error);
 });
+
+module.exports = sequelize;

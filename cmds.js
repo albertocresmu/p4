@@ -1,21 +1,20 @@
-
+// Importo las funciones a medida que las necesito.
 const Sequelize = require('sequelize');
 
-const {log, biglog, errorlog, colorize} = require("./out");
+const {log, biglog, errorlog, colorize} = require('./out');
 
-const model = require('./model');
-
+const {models} = require('./model');
 
 /**
- * Muestra la ayuda.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
+* Muestra la ayuda.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+*/
 exports.helpCmd = rl => {
-    log("Commandos:");
+    log("Comandos:");
     log("  h|help - Muestra esta ayuda.");
     log("  list - Listar los quizzes existentes.");
-    log("  show <id> - Muestra la pregunta y la respuesta el quiz indicado.");
+    log("  show <id> - Muestra la pregunta y la respuesta del quiz indicado.");
     log("  add - Añadir un nuevo quiz interactivamente.");
     log("  delete <id> - Borrar el quiz indicado.");
     log("  edit <id> - Editar el quiz indicado.");
@@ -26,17 +25,22 @@ exports.helpCmd = rl => {
     rl.prompt();
 };
 
-
 /**
- * Lista todos los quizzes existentes en el modelo.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
+* Lista todos los quizzes existentes en el modelo.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+*/
 exports.listCmd = rl => {
-    model.getAll().forEach((quiz, id) => {
-        log(` [${colorize(id, 'magenta')}]:  ${quiz.question}`);
+    models.quiz.findAll()
+    .each(quiz => {
+        log(`  [${colorize(quiz.id, 'magenta')}]: ${quiz.question} `);
+    })
+    .catch(error => {
+        errorlog(error.message);
+    })
+    .then(() => {
+        rl.prompt();
     });
-    rl.prompt();
 };
 
 /**
@@ -63,11 +67,11 @@ const validateId = id => {
 };
 
 /**
- * Muestra el quiz indicado en el parámetro: la pregunta y la respuesta.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a mostrar.
- */
+* Muestra el quiz indicado en el parámetro: la pregunta y la respuesta.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+* @param id Clave del quiz a mostrar.
+*/
 exports.showCmd = (rl, id) => {
     validateId(id)
     .then(id => models.quiz.findById(id))
@@ -106,17 +110,18 @@ const makeQuestion = (rl, text) => {
     });
 };
 
+
 /**
- * Añade un nuevo quiz al módelo.
- * Pregunta interactivamente por la pregunta y por la respuesta.
- *
- * Hay que recordar que el funcionamiento de la funcion rl.question es asíncrono.
- * El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuario,
- * es decir, la llamada a rl.prompt() se debe hacer en la callback de la segunda
- * llamada a rl.question.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
+* Añade un nuevo quiz al modelo.
+* Pregunta interactivamente por la pregunta y por la respuesta.
+*
+* Hay que recordar que el funcionamiento de la función rl.question es asíncrono.
+* El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuarios,
+* es decir, la llamada a promt() se debe hacer en el callback de la segunda
+* llamada a rl.question.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+*/
 exports.addCmd = rl => {
     makeQuestion(rl, ' Introduzca una pregunta: ')
     .then(q => {
@@ -143,13 +148,12 @@ exports.addCmd = rl => {
     });
 };
 
-
 /**
- * Borra un quiz del modelo.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a borrar en el modelo.
- */
+* Borra un quiz del modelo.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+* @param id Clave del quiz a borrar en el modelo.
+*/
 exports.deleteCmd = (rl, id) => {
     validateId(id)
     .then(id => models.quiz.destroy({where: {id}}))
@@ -161,18 +165,17 @@ exports.deleteCmd = (rl, id) => {
     });
 };
 
-
 /**
- * Edita un quiz del modelo.
- *
- * Hay que recordar que el funcionamiento de la funcion rl.question es asíncrono.
- * El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuario,
- * es decir, la llamada a rl.prompt() se debe hacer en la callback de la segunda
- * llamada a rl.question.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a editar en el modelo.
- */
+* Edita un quiz del modelo.
+*
+* Hay que recordar que el funcionamiento de la función rl.question es asíncrono.
+* El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuarios,
+* es decir, la llamada a promt() se debe hacer en el callback de la segunda
+* llamada a rl.question.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+* @param id Clave del quizz a editar en el modelo.
+*/
 exports.editCmd = (rl, id) => {
 
     validateId(id)
@@ -211,13 +214,13 @@ exports.editCmd = (rl, id) => {
     });
 };
 
-
 /**
- * Prueba un quiz, es decir, hace una pregunta del modelo a la que debemos contestar.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a probar.
- */
+* Prueba un quiz, es decir, hace una pregunta del modelo a la que debemos contestar.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+* @param id Clave del quiz a probar.
+*/
+
 exports.testCmd = (rl, id) => {
     validateId(id)
     .then(id => models.quiz.findById(id))
@@ -251,13 +254,12 @@ exports.testCmd = (rl, id) => {
     })
 };
 
-
 /**
- * Pregunta todos los quizzes existentes en el modelo en orden aleatorio.
- * Se gana si se contesta a todos satisfactoriamente.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
+* Pregunta todos los quizzes existentes en el modelo en orden aleatorio.
+* Se gana si se contesta a todos satisfactoriamente.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+*/
 exports.playCmd = rl => {
     let score = 0;
     let toBeResolved = [];
@@ -306,25 +308,22 @@ exports.playCmd = rl => {
     });
 };
 
-
 /**
- * Muestra los nombres de los autores de la práctica.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
+* Muestra los nombres de los autores de la práctica.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+*/
 exports.creditsCmd = rl => {
-    log('Autores de la práctica:');
-    log('Alberto Crespo Munoz', 'green');
+    log('Autor de la práctica:');
+    log('ALBERTO', 'green');
     rl.prompt();
 };
 
-
 /**
- * Terminar el programa.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
+* Terminar el programa.
+*
+* @param rl Objeto readline usado para implementar el CLI.
+*/
 exports.quitCmd = rl => {
     rl.close();
 };
-
